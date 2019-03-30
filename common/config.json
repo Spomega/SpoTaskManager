@@ -1,0 +1,8 @@
+{
+    "Server"      : "0.0.0.0:8080",
+    "MongoDBHost" : "127.0.0.1",
+    "MongoDBUser"	: "spomega",
+    "MongoDBPwd"	: "1234",
+    "Database"    : "spodb",
+    "LogLevel"    : 4
+}
