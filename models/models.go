@@ -23,8 +23,8 @@ type (
 		CreatedBy   string             `json:"createdby"`
 		Name        string             `json:"name"`
 		Description string             `json:"description"`
-		CreatedOn   string             `json:"createdon,omitempty"`
-		Due         string             `json:"due,omitempty"`
+		CreatedOn   time.Time          `json:"createdon,omitempty"`
+		Due         time.Time          `json:"due,omitempty"`
 		Status      string             `json:"status,omitempty"`
 		Tag         []string           `json:"tags,omitempty"`
 	}

@@ -13,6 +13,16 @@ type (
 		Data LoginModel `json:"data"`
 	}
 
+	// For Post/Put - /tasks
+	// For Get - /tasks/id
+	TaskResource struct {
+		Data models.Task `json:"data"`
+	}
+	// For Get - /tasks
+	TasksResource struct {
+		Data []models.Task `json:"data"`
+	}
+
 	//AuthUserResource Response for authorized user Post -/user/login
 	AuthUserResource struct {
 		Data AuthUserModel `json:"data"`
