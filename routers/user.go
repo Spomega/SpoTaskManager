@@ -3,13 +3,17 @@ package routers
 import (
 	"spotestapi/controllers"
 
-	"github.com/gorilla/mux"
+	"go.mongodb.org/mongo-driver/mongo"
+
+	"github.com/go-chi/chi"
+	"go.uber.org/zap"
 )
 
 //SetUserRouters user routes
-func SetUserRoutes(router *mux.Router) *mux.Router {
+func SetUserRoutes(logger *zap.Logger, db *mongo.Database) *chi.Mux {
+	router := chi.NewRouter()
+	router.Post("/register", controllers.Register(logger, db))
+	router.Post("/login", controllers.Login(logger, db))
 
-	router.HandleFunc("/users/register", controllers.Register).Methods("POST")
-	router.HandleFunc("/users/login", controllers.Login).Methods("POST")
 	return router
 }

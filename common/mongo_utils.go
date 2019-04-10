@@ -6,10 +6,11 @@ import (
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.uber.org/zap"
 )
 
 //GetDatabase returns database from credentials
-func GetDatabase(ctx context.Context) (*mongo.Database, error) {
+func GetDatabase(ctx context.Context, logger *zap.Logger) (*mongo.Database, error) {
 	fmt.Println("context", ctx)
 	url := fmt.Sprintf("mongodb://%s:%s@%s/%s",
 		ctx.Value(AppConfigLiteral.Username).(string),
@@ -20,12 +21,14 @@ func GetDatabase(ctx context.Context) (*mongo.Database, error) {
 	client, err := mongo.NewClient(options.Client().ApplyURI(url))
 
 	if err != nil {
-		return nil, fmt.Errorf("todo: couldn't connect to mongo: %v", err)
+		logger.Warn("todo: couldn't connect to mongo:")
+		return nil, err
 	}
 	err = client.Connect(ctx)
 
 	if err != nil {
-		return nil, fmt.Errorf("todo: mongo client couldn't connect with background context: %v", err)
+		logger.Warn("mongo client couldn't connect with background context:")
+		return nil, err
 	}
 
 	db := client.Database(ctx.Value(AppConfigLiteral.Database).(string))

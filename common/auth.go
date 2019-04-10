@@ -3,13 +3,13 @@ package common
 import (
 	"crypto/rsa"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/dgrijalva/jwt-go/request"
 	"github.com/gorilla/context"
+	"go.uber.org/zap"
 )
 
 // AppClaims provides custom claim for JWT
@@ -84,7 +84,6 @@ func GenerateJWT(name, role string) (string, error) {
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 
-	
 	ss, err := token.SignedString(signKey)
 	if err != nil {
 		return "", err
@@ -148,4 +147,66 @@ func Authorize(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 			401,
 		)
 	}
+}
+
+//JwtAuthorize Middleware for validating JWT tokens
+func JwtAuthorize(next http.Handler) http.Handler {
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		// Get token from request
+		token, err := request.ParseFromRequestWithClaims(r, request.OAuth2Extractor, &AppClaims{}, func(token *jwt.Token) (interface{}, error) {
+			// since we only use the one private key to sign the tokens,
+			// we also only use its public counter part to verify
+			return verifyKey, nil
+		})
+
+		if err != nil {
+			switch err.(type) {
+
+			case *jwt.ValidationError: // JWT validation error
+				vErr := err.(*jwt.ValidationError)
+
+				switch vErr.Errors {
+				case jwt.ValidationErrorExpired: //JWT expired
+					DisplayAppError(
+						w,
+						err,
+						"Access Token is expired, get a new Token",
+						401,
+					)
+					return
+
+				default:
+					DisplayAppError(w,
+						err,
+						"Error while parsing the Access Token!",
+						500,
+					)
+					return
+				}
+
+			default:
+				DisplayAppError(w,
+					err,
+					"Error while parsing Access Token!",
+					500)
+				return
+			}
+
+		}
+		if token.Valid {
+			//Set user name to HTTP context
+			context.Set(r, "user", token.Claims.(*AppClaims).UserName)
+			next.ServeHTTP(w, r)
+		} else {
+			DisplayAppError(
+				w,
+				err,
+				"Invalid Access Token",
+				401,
+			)
+		}
+
+	})
 }

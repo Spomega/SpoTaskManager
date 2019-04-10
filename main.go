@@ -1,12 +1,13 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"spotestapi/common"
 	"spotestapi/routers"
+	"time"
 
-	"github.com/urfave/negroni"
 	"go.uber.org/zap"
 )
 
@@ -24,22 +25,32 @@ func initializeLogger(environment string) (*zap.Logger, error) {
 
 func main() {
 	logger, err := initializeLogger(development)
-	if err != nil {
-		errorCausingFail("Could not initialze logger", err)
-	}
-	err = common.StartUp(logger)
-	if err != nil {
-		errorCausingFail("Could initialize configuration", err)
-	}
-	
-	router := routers.InitRoutes()
+	errorCausingFail("Could not initialze logger", err)
 
-	n := negroni.Classic()
-	n.UseHandler(router)
+	err = common.StartUp(logger)
+	errorCausingFail("Could initialize configuration", err)
+
+	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
+	//ctx, cancel := context.WithCancel(ctx)
+
+	defer cancel()
+
+	ctx = context.WithValue(ctx, common.AppConfigLiteral.Host, common.AppConfig.MongoDBHost)
+	ctx = context.WithValue(ctx, common.AppConfigLiteral.Username, common.AppConfig.MongoDBUser)
+	ctx = context.WithValue(ctx, common.AppConfigLiteral.Password, common.AppConfig.MongoDBPwd)
+	ctx = context.WithValue(ctx, common.AppConfigLiteral.Database, common.AppConfig.Database)
+
+	database, err := common.GetDatabase(ctx, logger)
+	errorCausingFail("Could not create database", err)
+
+	logger.Info("Database Created Successfully")
+
+	router := routers.InitRoutes(logger, database)
 
 	server := &http.Server{
 		Addr:    common.AppConfig.Server,
-		Handler: n,
+		Handler: router,
 	}
 
 	log.Println("Listening...")

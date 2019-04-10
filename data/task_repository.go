@@ -12,8 +12,8 @@ import (
 )
 
 type TaskRepository struct {
-	C   *mongo.Collection
-	log *zap.Logger
+	C *mongo.Collection
+	L *zap.Logger
 }
 
 //Create creates a task
@@ -27,7 +27,7 @@ func (r *TaskRepository) Create(task *models.Task) error {
 	if err != nil {
 		return err
 	}
-	r.log.Info("results :", zap.Any("query result", res))
+	r.L.Info("results :", zap.Any("query result", res))
 	return nil
 }
 
@@ -48,7 +48,7 @@ func (r *TaskRepository) Update(task *models.Task) error {
 	if err != nil {
 		return err
 	}
-	r.log.Info("results :", zap.Any("query result", res))
+	r.L.Info("results :", zap.Any("query result", res))
 	return nil
 
 }
@@ -63,7 +63,7 @@ func (r *TaskRepository) Delete(id string) error {
 	if err != nil {
 		return err
 	}
-	r.log.Info("results :", zap.Any("query result", res))
+	r.L.Info("results :", zap.Any("query result", res))
 	return err
 }
 

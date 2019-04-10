@@ -11,7 +11,7 @@ func StartUp(log *zap.Logger) error {
 		return err
 	}
 	//initialize private and public keys for JWT authentication
-	err = initKeyog(log)
+	err = initKeys(log)
 	if err != nil {
 		return err
 	}

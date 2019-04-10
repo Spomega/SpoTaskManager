@@ -4,18 +4,18 @@ import (
 	"spotestapi/common"
 	"spotestapi/controllers"
 
-	"github.com/gorilla/mux"
-	"github.com/urfave/negroni"
+	"go.mongodb.org/mongo-driver/mongo"
+
+	"github.com/go-chi/chi"
+	"go.uber.org/zap"
 )
 
-func SetTaskRoutes(router *mux.Router) *mux.Router {
-	taskRouter := mux.NewRouter()
-	taskRouter.HandleFunc("/tasks", controllers.CreateTask).Methods("POST")
-	taskRouter.HandleFunc("/tasks", controllers.GetTasks).Methods("GET")
-	router.PathPrefix("/tasks").Handler(negroni.New(
-		negroni.HandlerFunc(common.Authorize),
-		negroni.Wrap(taskRouter),
-	))
+//SetTaskRoutes setting task routes
+func SetTaskRoutes(logger *zap.Logger, db *mongo.Database) *chi.Mux {
+	taskRouter := chi.NewRouter()
+	taskRouter.Use(common.JwtAuthorize)
+	taskRouter.Post("/", controllers.CreateTask(logger, db))
+	taskRouter.Get("/", controllers.GetTasks(logger, db))
 
-	return router
+	return taskRouter
 }

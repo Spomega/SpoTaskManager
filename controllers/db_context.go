@@ -33,7 +33,7 @@ func GetDatabaseWithContext() *Database {
 	ctx = context.WithValue(ctx, common.AppConfigLiteral.Password, common.AppConfig.MongoDBPwd)
 	ctx = context.WithValue(ctx, common.AppConfigLiteral.Database, common.AppConfig.Database)
 
-	database, err := common.GetDatabase(ctx)
+	/**	database, err := common.GetDatabase(ctx)
 
 	if err != nil {
 
@@ -41,7 +41,7 @@ func GetDatabaseWithContext() *Database {
 
 	db := &Database{
 		MongoDB: database,
-	}
+	} **/
 
-	return db
+	return nil
 }
