@@ -36,31 +36,36 @@ var (
 )
 
 //Read the key files before starting http handlers
-func initKeys() {
+func initKeys(log *zap.Logger) error {
 	var err error
 
 	signBytes, err := ioutil.ReadFile(privKeyPath)
 
 	if err != nil {
-		log.Fatalf("[initKeys]: %s\n", err)
+		log.Warn("[initKeys]: Error has occurred reading private Key File")
+		return err
 	}
 
 	signKey, err = jwt.ParseRSAPrivateKeyFromPEM(signBytes)
 	if err != nil {
-		log.Fatalf("[initKeys]: %s\n", err)
+		log.Warn("[initKeys]: Error has occurred while parsing private key File")
+		return err
 	}
 
 	verifyBytes, err := ioutil.ReadFile(pubKeyPath)
 
 	if err != nil {
-		log.Fatalf("[initKeys]: %s/n", err)
-		panic(err)
+		log.Warn("[initKeys]: Error has occurred while reading public key File")
+		return err
 	}
 
 	verifyKey, err = jwt.ParseRSAPublicKeyFromPEM(verifyBytes)
 	if err != nil {
-		log.Fatalf("[initKeys]: %s\n", err)
+		log.Warn("[initKeys]: Error has occurred while parsing private key File")
+		return err
 	}
+
+	return nil
 
 }
 
@@ -79,7 +84,7 @@ func GenerateJWT(name, role string) (string, error) {
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 
-	//fmt.Printf("[key]: %v/n", signKey)
+	
 	ss, err := token.SignedString(signKey)
 	if err != nil {
 		return "", err

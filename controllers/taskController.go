@@ -70,7 +70,7 @@ func GetTasks(w http.ResponseWriter, r *http.Request) {
 	col := database.DbCollection("tasks")
 	repo := &data.TaskRepository{C: col}
 
-	tasks := repo.GetAll()
+	tasks, err := repo.GetAll()
 
 	j, err := json.Marshal(TasksResource{Data: tasks})
 

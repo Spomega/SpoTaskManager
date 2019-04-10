@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+
+	"go.uber.org/zap"
 )
 
 type key string
@@ -34,18 +36,20 @@ var AppConfigLiteral configLiteral
 
 //initialize AppConfig
 
-func initConfig() {
-	loadAppConfig()
+func initConfig(log *zap.Logger) error {
+	return loadAppConfig(log)
 }
 
 //Reads config.json and decode into Appconfig
 
-func loadAppConfig() {
+func loadAppConfig(log *zap.Logger) error {
+
 	file, err := os.Open("common/config.json")
 	defer file.Close()
 
 	if err != nil {
-		log.Fatalf("[loadConfig]: %s\n", err)
+		log.Warn("[loadConfig]:An error occurred while parsing config file")
+		return err
 	}
 
 	decoder := json.NewDecoder(file)
@@ -60,8 +64,11 @@ func loadAppConfig() {
 	}
 
 	if err != nil {
-		log.Fatalf("[loadAppConfig]: %s\n", err)
+		log.Warn("[loadConfig]:An error occurred while decoding config file")
+		return err
 	}
+
+	return nil
 }
 
 //

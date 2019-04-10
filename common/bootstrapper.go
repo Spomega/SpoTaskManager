@@ -1,10 +1,21 @@
 package common
 
-func StartUp() {
+import "go.uber.org/zap"
+
+//StartUp bootstraps the initial configurations of app
+func StartUp(log *zap.Logger) error {
 
 	//Initialize AppConfig variable
-	initConfig()
+	err := initConfig(log)
+	if err != nil {
+		return err
+	}
 	//initialize private and public keys for JWT authentication
-	initKeys()
+	err = initKeyog(log)
+	if err != nil {
+		return err
+	}
+
+	return nil
 
 }

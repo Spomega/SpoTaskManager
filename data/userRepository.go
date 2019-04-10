@@ -2,9 +2,9 @@ package data
 
 import (
 	"context"
-	"fmt"
-	"log"
 	"spotestapi/models"
+
+	"go.uber.org/zap"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
@@ -13,13 +13,16 @@ import (
 
 type UserRepository struct {
 	C *mongo.Collection
+	L *zap.Logger
 }
 
+//CreateUser adds user to the database
 func (r *UserRepository) CreateUser(user *models.User) error {
+
 	hpass, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	user.HashPassword = hpass
@@ -29,12 +32,15 @@ func (r *UserRepository) CreateUser(user *models.User) error {
 	res, err := r.C.InsertOne(context.Background(), user)
 
 	if err != nil {
-		log.Fatalf("todo:collection %v", err)
+		return err
 	}
-	fmt.Printf("results : %v", res)
-	return err
+
+	r.L.Info("results from DB insert ", zap.Any("result", res))
+
+	return nil
 }
 
+//Login function contains the user login implementation
 func (r *UserRepository) Login(user models.User) (u models.User, err error) {
 
 	filter := bson.M{"email": user.Email}
