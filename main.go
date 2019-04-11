@@ -4,8 +4,11 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
 	"spotestapi/common"
 	"spotestapi/routers"
+	"syscall"
 	"time"
 
 	"go.uber.org/zap"
@@ -44,7 +47,7 @@ func main() {
 	database, err := common.GetDatabase(ctx, logger)
 	errorCausingFail("Could not create database", err)
 
-	logger.Info("Database Created Successfully")
+	logger.Info("Database Created Successfully", zap.Any("database", database))
 
 	router := routers.InitRoutes(logger, database)
 
@@ -55,6 +58,25 @@ func main() {
 
 	log.Println("Listening...")
 	server.ListenAndServe()
+
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
+
+	idleConnsClosed := make(chan struct{})
+	go func() {
+		defer close(idleConnsClosed)
+
+		recv := <-sigs
+		logger.Info("received signal, shutting down", zap.Any("signal", recv.String))
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := server.Shutdown(ctx); err != nil {
+			logger.Warn("error shutting down server", zap.Error(err))
+		}
+	}()
+	<-idleConnsClosed
+	logger.Info("server shutdown successfully")
 
 }
 

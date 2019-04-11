@@ -31,6 +31,12 @@ func GetDatabase(ctx context.Context, logger *zap.Logger) (*mongo.Database, erro
 		return nil, err
 	}
 
+	err = client.Ping(ctx, nil)
+	if err != nil {
+		logger.Warn("mongo client couldn't ping server:")
+		return nil, err
+	}
+
 	db := client.Database(ctx.Value(AppConfigLiteral.Database).(string))
 
 	return db, nil
