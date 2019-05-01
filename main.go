@@ -11,27 +11,35 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/kelseyhightower/envconfig"
+
 	"go.uber.org/zap"
 )
 
-const (
-	production  = "production"
-	development = "development"
-)
+var env = struct {
+	Server      string `envconfig:"SERVER"  required:"true"`
+	MongoDBHost string `envconfig:"MONGODBHOST"  required:"true"`
+	MongoDBUser string `envconfig:"MONGODBUSER"  required:"true"`
+	MongoDBPwd  string `envconfig:"MONGODBPWD" required:"true"`
+	Database    string `envconfg:"DATABASE"   required:"true"`
+}{}
 
-func initializeLogger(environment string) (*zap.Logger, error) {
-	if environment == production {
-		return zap.NewProduction()
+func init() {
+	err := envconfig.Process("", &env)
+	if err != nil {
+		log.Fatalf("failed loading configurations %v", err)
 	}
-	return zap.NewDevelopment()
 }
-
 func main() {
-	logger, err := initializeLogger(development)
-	errorCausingFail("Could not initialze logger", err)
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		log.Fatalf("Could not  initialize logger %v", err)
+	}
 
 	err = common.StartUp(logger)
-	errorCausingFail("Could initialize configuration", err)
+	if err != nil {
+		log.Fatalf("Could not  initialize logger %v", err)
+	}
 
 	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
@@ -39,24 +47,26 @@ func main() {
 
 	defer cancel()
 
-	ctx = context.WithValue(ctx, common.AppConfigLiteral.Host, common.AppConfig.MongoDBHost)
-	ctx = context.WithValue(ctx, common.AppConfigLiteral.Username, common.AppConfig.MongoDBUser)
-	ctx = context.WithValue(ctx, common.AppConfigLiteral.Password, common.AppConfig.MongoDBPwd)
-	ctx = context.WithValue(ctx, common.AppConfigLiteral.Database, common.AppConfig.Database)
+	ctx = context.WithValue(ctx, common.AppConfigLiteral.Host, env.MongoDBHost)
+	ctx = context.WithValue(ctx, common.AppConfigLiteral.Username, env.MongoDBUser)
+	ctx = context.WithValue(ctx, common.AppConfigLiteral.Password, env.MongoDBPwd)
+	ctx = context.WithValue(ctx, common.AppConfigLiteral.Database, env.Database)
 
 	database, err := common.GetDatabase(ctx, logger)
-	errorCausingFail("Could not create database", err)
+	if err != nil {
+		log.Fatalf("Could not create database %v", err)
+	}
 
 	logger.Info("Database Created Successfully", zap.Any("database", database))
 
 	router := routers.InitRoutes(logger, database)
 
 	server := &http.Server{
-		Addr:    common.AppConfig.Server,
+		Addr:    env.Server,
 		Handler: router,
 	}
 
-	log.Println("Listening...")
+	logger.Info("Listening.........")
 	server.ListenAndServe()
 
 	sigs := make(chan os.Signal, 1)
@@ -78,10 +88,4 @@ func main() {
 	<-idleConnsClosed
 	logger.Info("server shutdown successfully")
 
-}
-
-func errorCausingFail(msg string, err error) {
-	if err != nil {
-		log.Fatalf("%s : %v", msg, err)
-	}
 }

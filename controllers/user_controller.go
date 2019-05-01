@@ -32,7 +32,7 @@ func Register(logger *zap.Logger, db *mongo.Database) http.HandlerFunc {
 		}
 		user := &dataResource.Data
 		col := db.Collection("users")
-		repo := &data.UserRepository{C: col, L: logger}
+		repo := data.NewUserRepository(col, logger)
 
 		//insert User document
 		repo.CreateUser(user)
@@ -84,7 +84,7 @@ func Login(logger *zap.Logger, db *mongo.Database) http.HandlerFunc {
 		}
 
 		col := db.Collection("users")
-		repo := &data.UserRepository{C: col, L: logger}
+		repo := data.NewUserRepository(col, logger)
 
 		//Authenticate the login user
 		user, err := repo.Login(loginUser)

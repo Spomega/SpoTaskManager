@@ -11,9 +11,18 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
+//UserRepository struct
 type UserRepository struct {
 	C *mongo.Collection
 	L *zap.Logger
+}
+
+//NewUserRepository  returns a pointer to this UserRepository
+func NewUserRepository(collection *mongo.Collection, logger *zap.Logger) *UserRepository {
+	return &UserRepository{
+		C: collection,
+		L: logger,
+	}
 }
 
 //CreateUser adds user to the database
